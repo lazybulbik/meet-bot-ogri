@@ -1,0 +1,41 @@
+db_data = [
+    {
+        'id': None,
+        'name': None,
+        'gender': '',
+        'age': None,
+        'height': None,
+        'partner_age': None,
+        'alcohol': None,
+        'smoking': None,
+        'body': None,
+        'childrens': None,
+        'test_1': None,
+        'test_2': None,
+        'test_3': None,
+        'test_4': None,
+        'test_5': None,
+        'interests': None,
+        'photo': None,
+        'partner_childrens': None
+    }
+]
+
+data = {'name': 'рамиль',
+        'gender': 'Мужской',
+        'age': '15',
+        'partner_age': '15-16',
+        'height': '180',
+        'alcohol': 'Не пью',
+        'smoking': 'Курю',
+        'body': 'Атлетическое',
+        'childrens': 'Есть',
+        'partner_childrens': 'Без детей',
+        'test_1': '2111',
+        'test_2': '11211111',
+        'select_btns': ['Медитация', 'Психология', 'Вечеринки'],
+        'test_3': '121',
+        'test_4': '1121331',
+        'test_5': 'Дети;Друзья;Родители;Жена;Карьера;Религия;Домашние животные',
+        'interests': 'Медитация;Психология;Вечеринки',
+        'photo': 'AgACAgIAAxkBAAJEkGWjrARYA8qnKHsbMaqefBGXywO1AAIW1zEbjZIgSXx9XwABPcax1QEAAwIAA3kAAzQE'}
