@@ -69,20 +69,68 @@ async def callback(call: CallbackQuery, state: FSMContext):
         partner_id = call.data.split(':')[2]
         photo, text = menu.MainMenu().get_more_info(call.from_user.id, partner_id)
 
-        decline = types.InlineKeyboardButton('❌', callback_data=f'find:decline:{partner_id}')
-        ready = types.InlineKeyboardButton('❤️', callback_data=f'find:ready:{partner_id}')
-        more_info = types.InlineKeyboardButton('< К профилю', callback_data=f'find:back_profile:{partner_id}') 
+        if call.data.split(':')[-1] == 'present':
+            prev = types.InlineKeyboardButton('<', callback_data=f'None')
+            next = types.InlineKeyboardButton('>', callback_data=f'find:next:{partner_id}:present')            
+            decline = types.InlineKeyboardButton('❌', callback_data=f'answer:decline:{partner_id}')
+            ready = types.InlineKeyboardButton('❤️', callback_data=f'answer:ready:{partner_id}')
+            more_info = types.InlineKeyboardButton('< К профилю', callback_data=f'find:back_profile:{partner_id}:present') 
 
-        kb = types.InlineKeyboardMarkup().row(decline, ready).row(more_info) 
+            kb = types.InlineKeyboardMarkup().row(prev, next).row(decline, ready).row(more_info) 
+
+        elif call.data.split(':')[-1] == 'match':
+            prev = types.InlineKeyboardButton('<', callback_data=f'None')
+            next = types.InlineKeyboardButton('>', callback_data=f'find:next:{partner_id}:match')
+            more_info = types.InlineKeyboardButton('< К профилю', callback_data=f'find:back_profile:{partner_id}:match')
+
+            kb = types.InlineKeyboardMarkup().row(prev, next).row(more_info)
+
+        else:
+            prev = types.InlineKeyboardButton('<', callback_data=f'None')
+            next = types.InlineKeyboardButton('>', callback_data=f'find:next:{partner_id}')            
+            decline = types.InlineKeyboardButton('❌', callback_data=f'find:decline:{partner_id}')
+            ready = types.InlineKeyboardButton('❤️', callback_data=f'find:ready:{partner_id}')
+            more_info = types.InlineKeyboardButton('< К профилю', callback_data=f'find:back_profile:{partner_id}')             
+
+            kb = types.InlineKeyboardMarkup().row(prev, next).row(decline, ready).row(more_info) 
 
         await call.message.edit_media(media=types.InputMediaPhoto(photo, caption=text), reply_markup=kb)
+
+    elif call.data.startswith('find:next'):
+        partner_id = call.data.split(':')[2]
+
+        if call.data.split(':')[-1] == 'present':
+            photo, text, kb = menu.MainMenu().get_presents_menu(call.from_user.id, partner_id, page=2)
+        elif call.data.split(':')[-1] == 'match':
+            photo, text, kb = menu.MainMenu().get_match_text(call.from_user.id, partner_id, page=2)
+        else:
+            photo, text, kb = menu.MainMenu().find_partner(call.from_user.id, partner_id=partner_id, page=2)
+
+        await call.message.edit_media(media=types.InputMediaPhoto(photo, caption=text), reply_markup=kb)
+
+    elif call.data.startswith('find:prev'):
+        partner_id = call.data.split(':')[2]
+
+        if call.data.split(':')[-1] == 'present':
+            photo, text, kb = menu.MainMenu().get_presents_menu(call.from_user.id, partner_id, page=1)
+        elif call.data.split(':')[-1] == 'match':
+            photo, text, kb = menu.MainMenu().get_match_text(call.from_user.id, partner_id, page=1)
+        else:
+            photo, text, kb = menu.MainMenu().find_partner(call.from_user.id, partner_id=partner_id, page=1)
+
+        await call.message.edit_media(media=types.InputMediaPhoto(photo, caption=text, parse_mode='MARKDOWN'), reply_markup=kb)        
 
     elif call.data.startswith('find:back_profile'):
         partner_id = call.data.split(':')[2]
 
-        photo, text, kb = menu.MainMenu().find_partner(call.from_user.id, partner_id=partner_id)
+        if call.data.split(':')[-1] == 'present':
+            photo, text, kb = menu.MainMenu().get_presents_menu(call.from_user.id, partner_id)
+        elif call.data.split(':')[-1] == 'match':
+            photo, text, kb = menu.MainMenu().get_match_text(call.from_user.id, partner_id)
+        else:
+            photo, text, kb = menu.MainMenu().find_partner(call.from_user.id, partner_id=partner_id)
 
-        await call.message.edit_media(media=types.InputMediaPhoto(photo, caption=text), reply_markup=kb)
+        await call.message.edit_media(media=types.InputMediaPhoto(photo, caption=text, parse_mode='MARKDOWN'), reply_markup=kb)
 
 @dp.callback_query_handler(lambda call: call.data.startswith('answer:'))
 async def callback(call: CallbackQuery, state: FSMContext):
@@ -100,12 +148,12 @@ async def callback(call: CallbackQuery, state: FSMContext):
         blacklist.append(partner_id)
         db.update_data(table='users', data={'black_list': ' '.join(blacklist)}, filters={'id': user_data['id']})
 
-        photo, text = menu.MainMenu().get_match_text(user_id=call.from_user.id, partner_id=partner_id)
+        photo, text, kb = menu.MainMenu().get_match_text(user_id=call.from_user.id, partner_id=partner_id)
         await call.message.delete()
-        await call.message.answer_photo(photo, caption=text, parse_mode='MARKDOWN')
+        await call.message.answer_photo(photo, caption=text, parse_mode='MARKDOWN', reply_markup=kb)
 
-        photo, text = menu.MainMenu().get_match_text(user_id=partner_id, partner_id=call.from_user.id)
-        await bot.send_photo(partner_id, photo=photo, caption=text, parse_mode='MARKDOWN')
+        photo, text, kb = menu.MainMenu().get_match_text(user_id=partner_id, partner_id=call.from_user.id)
+        await bot.send_photo(partner_id, photo=photo, caption=text, parse_mode='MARKDOWN', reply_markup=kb)
 
     elif call.data.startswith('answer:decline'):
         partner_id = call.data.split(':')[2]

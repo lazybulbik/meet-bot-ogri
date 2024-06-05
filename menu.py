@@ -272,7 +272,7 @@ class MainMenu():
 
         return kb
 
-    def find_partner(self, user_id, partner_id=None):
+    def find_partner(self, user_id, partner_id=None, page=1):
         numbers = {1: '1️⃣', 2: '2️⃣', 3: '3️⃣', 4: '4️⃣', 5: '5️⃣', 6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣', 10: '🔟'}
 
         if not partner_id:
@@ -316,7 +316,7 @@ class MainMenu():
 
         priority = '\n'.join(priority)
 
-        interests = ', '.join(partner_data['interests'].split(';'))
+        interests = '\n '.join(partner_data['interests'].split(';'))
 
         text = (f'*🫂 Ваша совместимость: {precent}%* \n'
                 f'----------------------------- \n'
@@ -328,18 +328,32 @@ class MainMenu():
                 f'🚬Курение: {smoking} \n'
                 f'🕴🏻Телосложение: {body} \n')
 
+        prev = types.InlineKeyboardButton('<', callback_data=f'None')
+        next = types.InlineKeyboardButton('>', callback_data=f'find:next:{partner_data["id"]}')
         decline = types.InlineKeyboardButton('❌', callback_data=f'find:decline:{partner_data["id"]}')
         ready = types.InlineKeyboardButton('❤️', callback_data=f'find:ready:{partner_data["id"]}')
         more_info = types.InlineKeyboardButton('Мнение Вазо', callback_data=f'find:more_info:{partner_data["id"]}')
 
         back = types.InlineKeyboardButton('Завершить просмотр', callback_data=f'back:del')
 
-        kb = types.InlineKeyboardMarkup().row(decline, ready).row(more_info)
+        kb = types.InlineKeyboardMarkup().row(prev, next).row(decline, ready).row(more_info)
 
-        return partner_data['photo'], text, kb
+        if len(partner_data['photo'].split()) >= 2:
+            photo = partner_data['photo'].split()[page - 1]
+
+        else:
+            photo = partner_data['photo'].split()[0]
+
+        if page == 2:
+            text = f'Интересы: \n\n{interests}'
+
+            prev.callback_data = f'find:prev:{partner_data["id"]}'
+            next.callback_data = f'None'            
+        
+        return photo, text, kb
 
 
-    def get_presents_menu(self, user_id, partner_id):
+    def get_presents_menu(self, user_id, partner_id, page=1):
         pretendients = [partner_id]
         numbers = {1: '1️⃣', 2: '2️⃣', 3: '3️⃣', 4: '4️⃣', 5: '5️⃣', 6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣', 10: '🔟'}
 
@@ -379,15 +393,30 @@ class MainMenu():
                 f'🚬Курение: {smoking} \n'
                 f'🕴🏻Телосложение: {body} \n')
 
+        prev = types.InlineKeyboardButton('<', callback_data=f'None')
+        next = types.InlineKeyboardButton('>', callback_data=f'find:next:{partner_data["id"]}:present')
         decline = types.InlineKeyboardButton('❌', callback_data=f'answer:decline:{partner_data["id"]}')
         ready = types.InlineKeyboardButton('❤️', callback_data=f'answer:ready:{partner_data["id"]}')
+        more_info = types.InlineKeyboardButton('Мнение Вазо', callback_data=f'find:more_info:{partner_data["id"]}:present')
 
-        kb = types.InlineKeyboardMarkup().row(decline, ready)
+        kb = types.InlineKeyboardMarkup().row(prev, next).row(decline, ready).row(more_info)
 
-        return partner_data['photo'], text, kb
+        if len(partner_data['photo'].split()) >= 2:
+            photo = partner_data['photo'].split()[page - 1]
+
+        else:
+            photo = partner_data['photo'].split()[0]
+
+        if page == 2:
+            text = f'Интересы: \n\n{interests}'
+
+            prev.callback_data = f'find:prev:{partner_data["id"]}:present'
+            next.callback_data = f'None'            
+        
+        return photo, text, kb
     
 
-    def get_match_text(self, user_id, partner_id):
+    def get_match_text(self, user_id, partner_id, page=1):
         """
         Get match text for two users based on their IDs.
         :param user_id: int, the ID of the user
@@ -433,12 +462,32 @@ class MainMenu():
                 f'🍷Алоголь: {alcohol} \n'
                 f'🚬Курение: {smoking} \n'
                 f'🕴🏻Телосложение: {body} \n')
+        
+        prev = types.InlineKeyboardButton('<', callback_data=f'None')
+        next = types.InlineKeyboardButton('>', callback_data=f'find:next:{partner_data["id"]}:match')
 
-        return partner_data['photo'], text
+        more_info = types.InlineKeyboardButton('Мнение Вазо', callback_data=f'find:more_info:{partner_data["id"]}:match') 
+
+        kb = types.InlineKeyboardMarkup().row(prev, next).row(more_info)       
+
+        if len(partner_data['photo'].split()) >= 2:
+            photo = partner_data['photo'].split()[page - 1]
+
+        else:
+            photo = partner_data['photo'].split()[0]
+
+        if page == 2:
+            text = f'Интересы: \n\n{interests}'
+
+            prev.callback_data = f'find:prev:{partner_data["id"]}:match'
+            next.callback_data = f'None'            
+        
+        return photo, text, kb        
     
     def get_more_info(self, user_id, partner_id):
         user_1_data = db.get_data(table='users', filters={'id': user_id})[0]
         user_2_data = db.get_data(table='users', filters={'id': partner_id})[0]
+        precent = utils.Comaparator(partner_id, user_id).compare()
 
         if user_2_data['gender'] == 'Мужской':
             user_1_data, user_2_data = user_2_data, user_1_data
@@ -449,65 +498,102 @@ class MainMenu():
         if user_1_data['test_1'][0] == '2' and user_2_data['test_1'][0] == '1':
             if user_1_data['test_1'][3] == '1' and user_2_data['test_1'][3] == '1':
                 if user_1_data['test_4'][0] == '1' and user_2_data['test_4'][0] == '1':
-                    plus.append('   · Вы оба цените свободу и проповедуете отношения построенные на доверии.')
+                    plus.append('   💘 Вы оба цените свободу и проповедуете отношения построенные на доверии.')
 
         if user_1_data['test_2'][1] == '1' and user_2_data['test_2'][1] == '1':
             if user_1_data['test_4'][5] == '2' and user_2_data['test_4'][5] == '2':
-                plus.append('   · Недосказанность - это не про вас, вы оба предпочитаете выражать свои мысли прямо, избегая недопониманий.')
+                plus.append('   💘 Недосказанность - это не про вас, вы оба предпочитаете выражать свои мысли прямо, избегая недопониманий.')
 
         if user_1_data['test_2'][1] == '2' and user_2_data['test_2'][1] == '2':
             if user_1_data['test_4'][6] == '1' and user_2_data['test_4'][6] == '1':
-                plus.append('   · Вы с легкостью достигните взаимопонимания, у вас одни мысли на двоих, а может даже и судьба.')
+                plus.append('   💘 Вам будет легко подстроиться друг под друга, осталось поймать одну волну для общих мыслей и интересов.							')
 
         if user_1_data['test_1'][2] == '1' and user_2_data['test_1'][2] == '1':
             if '3' in user_1_data['test_3'] and '3' in user_2_data['test_3']:
-                plus.append('   · Для такого сапиосексуала трудно найти партнера, но я это сделал. Ваше знакомство может обернуться неприкрытым интересом, а увлекательные разговоры внести разнообразие в вашу жизнь.')
+                plus.append('   💘 Для такого сапиосексуала трудно найти партнера, но я это сделал. Ваше знакомство может обернуться неприкрытым интересом, а увлекательные разговоры внести разнообразие в вашу жизнь.')
 
         if user_2_data['test_2'][7] == '1' and user_1_data['test_2'][7] == '1':
             if user_2_data['test_4'][1] == '1' and user_1_data['test_4'][1] == '1':
                 if user_2_data['test_4'][2] == '2':
-                    plus.append('   · У тебя есть потребность во внимании, у партнера - в его проявлении и заботе. Не забывай отвечать взаимностью')
+                    plus.append('   💘 У тебя есть потребность во внимании, у партнера - в его проявлении и заботе. Не забывай отвечать взаимностью')
 
         if user_2_data['test_1'][0] == '2' and user_1_data['test_1'][0] == '1':
             if user_2_data['test_4'][2] == '1' and user_1_data['test_2'][2] == '2':
                 if user_2_data['test_2'][6] == '2':
-                    plus.append('   · Ответственность и организованность партнера будут для тебя опорой. С такими качествами ты почувствуешь себя «как за каменной стеной».')
+                    plus.append('   💘 Ответственность и организованность партнера будут для тебя опорой. С такими качествами ты почувствуешь себя «как за каменной стеной».')
 
         if user_2_data['test_1'][0] == '2' and user_1_data['test_1'][0] == '1':
             if user_2_data['test_4'][5] == '1' and user_2_data['test_4'][5] == '1':
                 if user_2_data['test_5'].split(';')[0] == 'Муж':
-                    plus.append('   · Ваши взгляды очень похожи, вы одинаково придерживаетесь традиционных укладов семьи.')
+                    plus.append('   💘 Ваши взгляды очень похожи, вы одинаково придерживаетесь традиционных укладов семьи.')
 
-        # ----
+        if user_1_data['test_2'][3] == '2' and user_2_data['test_2'][3] == '2':
+            if user_1_data['test_2'][6] == '2' and user_2_data['test_2'][6] == '2':
+                plus.append('   💘 Вы оба стараетесь оставаться продуктивными')
+
+        if user_1_data['test_4'][1] == '2' and user_2_data['test_4'][1] == '2':
+            plus.append('   💘 Конфетно-букетному периоду и преждевременной романтизации вы предпочитаете рациональную осмотрительность.')
+
+        if 'Религия' in user_1_data['test_5'].split(';')[:3] and 'Религия' in user_2_data['test_5'].split(';')[:3]:
+            plus.append('   💘 Партнер разделяет твои религиозные взгляды')
+
+        # ---- 
 
         if user_2_data['test_1'][0] == '1' and user_1_data['test_1'][0] == '1':
             if user_2_data['test_4'][5] == '3' and user_2_data['test_4'][5] == '1':
-                minus.append('  · У вас разные взгляды на право главенства в семье. Каждый будет навязывать свою точку зрения, что затруднит принятие совместных решений.')
+                minus.append('  ⚠️ У вас разные взгляды на право главенства в семье. Каждый будет навязывать свою точку зрения, что затруднит принятие совместных решений.')
 
             if user_2_data['test_1'][3] == '1' and user_1_data['test_2'][4] == '1':
                 if user_2_data['test_4'][0] == '1' and user_1_data['test_4'][0] == '1':
-                    minus.append('  · Чрезмерный контроль партнера может подавлять тебя, заранее определите обоюдные границы личной свободы, чтобы избежать ограничений в будущем.')
+                    minus.append('  ⚠️ Чрезмерный контроль партнера может подавлять тебя, заранее определите обоюдные границы личной свободы, чтобы избежать ограничений в будущем.')
 
         if user_1_data['test_2'][1] == '1' and user_2_data['test_2'][1] == '2':
             if user_1_data['test_4'][6] == '2' and user_2_data['test_4'][6] == '1':
-                minus.append('  · Прямолинейность партнера может показаться тебе неуместной, а чувство безразличия - непрестанным. Изучайте и учите друг друга и, возможно, тогда чувство эмпатии и благодарности нивелируют ваши различия.')
+                minus.append('  ⚠️ Прямолинейность партнера может показаться тебе неуместной, а чувство безразличия - непрестанным. Изучайте и учите друг друга и, возможно, тогда чувство эмпатии и благодарности нивелируют ваши различия.')
 
         if user_1_data['test_1'][2] == '1' and user_2_data['test_1'][2] == '2':
             if ('3' in user_1_data['test_3'] and '3' not in user_2_data['test_3']) or ('3' in user_2_data['test_3'] and '3' not in user_1_data['test_3']):
-                minus.append('  · Несмотря на все сходства, вам может быть тяжело найти не только общий язык, но и общие интересы и темы для разговоров.')
+                minus.append('  ⚠️ Несмотря на все сходства, вам может быть тяжело найти не только общий язык, но и общие интересы и темы для разговоров.')
 
         if user_2_data['test_2'][7] == '1' and user_1_data['test_2'][7] == '2':
             if user_2_data['test_4'][1] == '1' and user_1_data['test_4'][1] == '2':
                 if user_2_data['test_4'][2] == '2':
-                    minus.append('  · Тебе важно чувствовать себя нужной, но не знаю, хватит ли внимания партнера расположить тебя к себе.. Это тебе и предстоит выяснить.')
+                    minus.append('  ⚠️ Тебе важно чувствовать себя нужной, но не знаю, хватит ли внимания партнера расположить тебя к себе.. Это тебе и предстоит выяснить.')
+
+        if user_1_data['test_2'][3] == '2' and user_2_data['test_2'][3] == '1':
+            if user_1_data['test_2'][6] == '2' and user_2_data['test_2'][6] == '1':
+                minus.append('  ⚠️ Пассивность партнера может показаться тебе обременительной')
+
+        if 'Религия' in user_1_data['test_5'].split(';')[:4] or 'Религия' in user_2_data['test_5'].split(';')[:4]:
+            if 'Религия' in user_1_data['test_5'].split(';')[-1] and 'Религия' in user_2_data['test_5'].split(';')[-1]:
+                if 'Наука' in user_1_data['interests'] or 'Наука' in user_2_data['interests']:
+                    minus.append('  ⚠️ Партнер может не разделять твоих религиозных предпочтений.')
+
 
         plus_list_text = '\n'.join(plus)
         minus_list_text = '\n'.join(minus)
 
         plus_text = '' if not plus else f'Преимущества:\n{plus_list_text}'
         minus_text = '' if not minus else f'Недостатки:\n{minus_list_text}'
+        comment = ''
+
+        if len(minus) == 0 and len(plus) >= 2:
+            comment = 'У вашей пары большой потенциал'
         
-        text = f'{plus_text}\n\n{minus_text}'
+        elif len(minus) == 0 and len(plus) == 1:
+            comment = 'Не вижу ни одного аргумента против, чтобы не порекомендовать вам друг друга'
+
+        elif len(plus) == 0 and len(minus) == 0 and precent >= 70:
+            comment = 'Не нашел ни одного аргумента против, чтобы не порекомендовать вам друг друга'
+
+        elif (50 <= precent <= 69) or (50 <= precent <= 75 and len(minus) > len(plus)):
+            comment = 'У вашей пары не самая высокая совместимость, но если стерпится, то может и слюбится'
+
+        elif precent < 50:
+            comment = 'Здесь даже мои стрелы бессильны💘, несите сразу пистолет🔫'
+            
+        
+        text = f'{comment}\n\n{plus_text}\n\n{minus_text}'
 
         photo = types.InputFile('media/info.png')
 

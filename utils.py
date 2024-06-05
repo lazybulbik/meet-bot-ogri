@@ -40,6 +40,9 @@ class Comaparator:
 
         if self.precent <= 0:
             return 0
+        
+        if self.precent > 100:
+            self.precent = 100
 
         return self.precent
 

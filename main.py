@@ -43,6 +43,21 @@ async def p(msg: Message, state: FSMContext):
     photo, text, kb = menu.MainMenu().find_partner(msg.from_user.id)
     if photo:
         await msg.answer_photo(photo=photo, caption=text, reply_markup=kb, parse_mode='MARKDOWN')
+        
+
+@dp.message_handler(commands=['clear_history'])
+async def c(msg: Message, state: FSMContext):
+    db.update_data(table='users', data={'black_list': ''}, filters={'id': msg.from_user.id})
+
+    for user in db.get_data(table='users'):
+        l = user['black_list'].split()
+        if msg.from_user.id in l:
+            l.remove(msg.from_user.id)
+            db.update_data(table='users', data={'black_list': ' '.join(l)}, filters={'id': user['id']})
+
+    photo, text, kb = menu.MainMenu().find_partner(msg.from_user.id)
+    if photo:
+        await msg.answer_photo(photo=photo, caption=text, reply_markup=kb, parse_mode='MARKDOWN')    
 
 
 @dp.message_handler(commands=['answers'])
