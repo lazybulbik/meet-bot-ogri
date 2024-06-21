@@ -16,11 +16,11 @@ class Comaparator:
         self.precent = 85
 
     def compare(self):
-        self.precent += self.check_gender()
+        # self.precent += self.check_gender()
         # print(self.precent, 'гендер')
-        self.precent += self.check_age()
+        # self.precent += self.check_age()
         # print(self.precent, 'возраст')
-        self.precent += self.check_childrens()
+        # self.precent += self.check_childrens()
         # print(self.precent, 'детей')
         self.precent += self.check_test_1()
         # print(self.precent, 'тест 1')
