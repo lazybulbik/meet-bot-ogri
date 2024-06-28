@@ -227,7 +227,7 @@ class Register:
         return text, kb
 
 
-class MainMenu():
+class MainMenu:
     def get_profile(self, user_id):
         user_data = db.get_data(table='users', filters={'id': user_id})[0]
 
@@ -281,7 +281,7 @@ class MainMenu():
             pretendients = []
 
 
-            for partner in db.get_data(table='users'):
+            for partner in db.get_data(table='users', filters={'is_del': False}):
                 if partner['id'] != user_data['id'] and str(partner['id']) not in user_data['black_list']:
                     precent = utils.Comaparator(partner['id'], user_data['id']).compare()
 
@@ -692,3 +692,93 @@ class MainMenu():
             return photo, text
         
         return photo, 'Мне не удалось найти плюсы или минусы'
+
+
+class Admin:
+    def __init__(self) -> None:
+        self.back = types.InlineKeyboardButton('< Назад в меню', callback_data='admin:menu')
+        self.back_menu = types.InlineKeyboardMarkup().add(self.back)
+
+    def get_menu(self):
+        users_count = len(db.get_data(table='users'))
+        male_count = len(db.get_data(table='users', filters={'gender': 'Мужской'}))
+        female_count = len(db.get_data(table='users', filters={'gender': 'Женский'}))
+
+        average_age = int(sum([user['age'] for user in db.get_data(table='users')]) / users_count)
+
+        text = (f'📊 Статистика 📊 \n\n'
+                f'Всего пользователей в боте: {users_count}\n'
+                f'  - Мужчин: {male_count}\n'
+                f'  - Женщин: {female_count}\n\n'
+                f'Средний возраст пользователей: {average_age}')
+        
+        btn_1 = types.InlineKeyboardButton('💬 Рассылка', callback_data='admin:mailing')
+        btn_2 = types.InlineKeyboardButton('👤 Пользователи', callback_data='admin:users:1')
+
+        kb = types.InlineKeyboardMarkup().row(btn_1).row(btn_2)
+
+        return text, kb
+    
+    def get_users(self, page=1):
+        page = int(page)
+        users_per_page = 10
+        all_users = db.get_data(table='users')
+        total_users = len(all_users)
+        total_pages = (total_users + users_per_page - 1) // users_per_page
+        
+        # Calculate the starting and ending indices for the current page
+        start_idx = (page - 1) * users_per_page
+        end_idx = start_idx + users_per_page
+        current_users = all_users[start_idx:end_idx]
+        
+        kb = types.InlineKeyboardMarkup()        
+
+        # Create the text for the current page
+        text = '👤 Список пользователей 👤\n\n'
+        for user in current_users:
+            username = user['username'] if user['username'] else 'Инкогнито'
+            btn_text = f'{username} ({user["id"]})'
+            kb.row(types.InlineKeyboardButton(btn_text, callback_data=f'admin:view_user:{user["id"]}'))
+        
+        # Create the pagination buttons
+        if page > 1:
+            prev = types.InlineKeyboardButton('<', callback_data=f'admin:users:{page-1}')
+        else:
+            prev = types.InlineKeyboardButton('<', callback_data=f'asjh')
+
+        count = types.InlineKeyboardButton(f'{page}/{total_pages}', callback_data='none')
+        
+        if page < total_pages:
+            next = types.InlineKeyboardButton('>', callback_data=f'admin:users:{page+1}')
+        else:
+            next = types.InlineKeyboardButton('>', callback_data=f'kejfhjndsm')
+
+        kb.row(prev, count, next)
+        
+        # # Add a back button to return to the main menu
+        kb.row(types.InlineKeyboardButton('🔙 Назад в меню', callback_data='admin:menu'))
+        
+        return text, kb
+    
+    def view_user(self, user_id):
+        user_data = db.get_data(table='users', filters={'id': user_id})[0]
+
+        watches = len(user_data['black_list'].split())
+
+        text = (f'👤 {user_data["username"]} ({user_data["id"]}) \n\n'
+                f'Пол: {user_data["gender"]}\n'
+                f'Возраст: {user_data["age"]}\n'
+                f'Рост: {user_data["height"]}\n'
+                f'Отношение к алкоголю: {user_data["alcohol"]} \n\n'
+                f'Просмотрено акнет: {watches}')
+
+        if user_data['is_del']:
+            btn = types.InlineKeyboardButton('✅ Разблокировать', callback_data=f'admin:unblock:{user_data["id"]}')
+        else:
+            btn = types.InlineKeyboardButton('🚫 Заблокировать', callback_data=f'admin:block:{user_data["id"]}')
+
+        btn_2 = types.InlineKeyboardButton('< Назад', callback_data='admin:users:1')
+
+        kb = types.InlineKeyboardMarkup().row(btn).row(btn_2)
+
+        return text, kb

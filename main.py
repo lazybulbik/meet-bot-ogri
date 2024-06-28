@@ -5,9 +5,20 @@ from aiogram.dispatcher import FSMContext
 import menu
 import utils
 from loader import bot, dp, db
+from config import ADMIN
 
-from handlers import register, edit, find, photo
 
+@dp.message_handler(lambda x: db.get_data(table='users', filters={'id': x.from_user.id})[0]['is_del'])
+async def block(msg: Message):
+    print('user_blocked')
+    return
+
+@dp.callback_query_handler(lambda x: db.get_data(table='users', filters={'id': x.from_user.id})[0]['is_del'])
+async def block(call: CallbackQuery):
+    print('user_blocked')
+    return
+
+from handlers import register, edit, find, photo, admin
 
 @dp.message_handler(commands=['start', 'profile'], state='*')
 async def start(msg: Message, state: FSMContext):
@@ -38,6 +49,14 @@ async def start(msg: Message, state: FSMContext):
         await state.set_state('register:gender')
 
 
+@dp.message_handler(commands=['admin'])
+async def admin(msg: Message):
+    if msg.from_user.id in ADMIN:
+        text, kb = menu.Admin().get_menu()
+
+        await msg.answer(text, reply_markup=kb)
+
+
 @dp.message_handler(commands=['partner'])
 async def p(msg: Message, state: FSMContext):
     photo, text, kb = menu.MainMenu().find_partner(msg.from_user.id)
@@ -62,9 +81,10 @@ async def c(msg: Message, state: FSMContext):
 
 @dp.message_handler(commands=['answers'])
 async def answers(msg: Message):
-    utils.get_users_answers()
+    if msg.from_user.id in ADMIN:
+        utils.get_users_answers()
 
-    await msg.answer_document(types.InputFile('answers.txt'))
+        await msg.answer_document(types.InputFile('answers.txt'))
 
 
 @dp.message_handler(commands=['link'], state='*')

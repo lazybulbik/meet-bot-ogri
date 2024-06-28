@@ -523,7 +523,8 @@ async def register_photo(message: Message, state: FSMContext):
             'photo': state_data['photo'],
             'black_list': '',
             'username': message.from_user.username,
-            'city': state_data['city']
+            'city': state_data['city'],
+            'is_del': False
         }
 
         db.new_write(table='users', data=write_data)
