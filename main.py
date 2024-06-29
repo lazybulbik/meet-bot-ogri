@@ -64,8 +64,9 @@ async def p(msg: Message, state: FSMContext):
         await msg.answer_photo(photo=photo, caption=text, reply_markup=kb, parse_mode='MARKDOWN')
         
 
-@dp.message_handler(commands=['clear_history'])
+@dp.message_handler(commands=['clear_history'], state='*')
 async def c(msg: Message, state: FSMContext):
+    print('clearing')
     db.update_data(table='users', data={'black_list': ''}, filters={'id': msg.from_user.id})
 
     for user in db.get_data(table='users'):

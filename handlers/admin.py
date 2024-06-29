@@ -11,7 +11,7 @@ from loader import bot, dp, db
 import questions
 
 
-@dp.callback_query_handler(lambda x: x.data.startswith('admin:'))
+@dp.callback_query_handler(lambda x: x.data.startswith('admin:'), state='*')
 async def admin(call: CallbackQuery, state: FSMContext):
     print(call.data)
     request = call.data.split(':')[1]
@@ -63,7 +63,7 @@ async def admin(call: CallbackQuery, state: FSMContext):
         await state.set_state('admin:mailing')
 
 
-@dp.message_handler(state='admin:mailing')
+@dp.message_handler(state='admin:mailing', content_types=['photo', 'text', 'video'])
 async def mailing(msg: Message, state: FSMContext):
     tech = await msg.answer('🔄 Рассылка сообщения')
 

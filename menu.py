@@ -281,7 +281,7 @@ class MainMenu:
             pretendients = []
 
 
-            for partner in db.get_data(table='users', filters={'is_del': False}):
+            for partner in db.get_data(table='users', filters={'is_del': 0}):
                 if partner['id'] != user_data['id'] and str(partner['id']) not in user_data['black_list']:
                     precent = utils.Comaparator(partner['id'], user_data['id']).compare()
 
